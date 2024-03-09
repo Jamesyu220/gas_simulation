@@ -1,0 +1,10 @@
+name: gas_simul
+channels:
+- defaults
+- conda-forge
+dependencies:
+- jupyter
+- matplotlib
+- pip
+- python=3.9
+- numpy
