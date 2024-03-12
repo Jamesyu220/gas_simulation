@@ -30,6 +30,7 @@ To run this project,
 2. Set up the virtual environment[packages](#technologies)
     ```sh
     conda env create -f gas_env_win.yml
+    conda activate gas_simul
     ```
 
 4. Install python libraries
