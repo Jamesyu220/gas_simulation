@@ -12,6 +12,10 @@ x = np.zeros((d, d, 3))
 v = np.zeros((d, d, 3))
 a = np.zeros((d, d, 3))
 
+line_vertices = ti.Vector.field(3, dtype=float, shape=(2,))
+line_vertices[0] = [0.0, 0.0, 0.0]
+line_vertices[1] = [0.8, 0.8, 0.8]
+
 # @ti.kernel
 def init_para():
     global x, v, a, ball_center
@@ -48,7 +52,7 @@ window = ti.ui.Window("Taichi Gascd  Simulation on GGUI", (1024, 1024),
                       vsync=True)
 canvas = window.get_canvas()
 canvas.set_background_color((1, 1, 1))
-scene = ti.ui.Scene()
+scene = window.get_scene()
 camera = ti.ui.Camera()
 
 current_t = 0.0
@@ -60,7 +64,7 @@ while window.running:
         init_para()
         current_t = 0
 
-    
+    scene.lines(vertices=line_vertices, width=0.5)
     particle_motion()
     update_pos()
     current_t += dt

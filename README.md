@@ -39,7 +39,7 @@ To run this project,
     ```
 4. Please go to the directory src and run:  
     ```sh
-    python test_taichi.py
+    python ideal_gas.py
     ```   
 
 <!-- ## Demos and Examples
