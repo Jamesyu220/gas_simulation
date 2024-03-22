@@ -5,8 +5,8 @@ ti.init(arch=ti.cpu)  # Alternatively, ti.init(arch=ti.cpu), ti.init(arch=ti.vul
 
 from particles import particle_motion
 
-dt = 1e-4
-n = 100
+dt = 1e-5
+n = 10000
 R = 8.31
 ball_radius = 0.005
 ball_center = ti.Vector.field(3, dtype=float, shape=(n,))
@@ -30,14 +30,14 @@ line_vertices[7] = [-box_size, -box_size, box_size]
 line_indices = ti.field(dtype=ti.i32, shape=(24,))
 line_indices.from_numpy(np.array([0, 1, 1, 2, 2, 3, 3, 0, 0, 4, 1, 5, 2, 6, 3, 7, 4, 5, 5, 6, 6, 7, 7, 4]))
 
-drain_vertices = ti.Vector.field(3, dtype=float, shape=(2,))
-drain_vertices[0] = [-drain_size, 0, -drain_size]
-drain_vertices[1] = [drain_size, 0, -drain_size]
-# drain_vertices[2] = [drain_size, -box_size, drain_size]
-# drain_vertices[3] = [-drain_size, -box_size, drain_size]
+drain_vertices = ti.Vector.field(3, dtype=float, shape=(4,))
+drain_vertices[0] = [-drain_size, -box_size, -drain_size]
+drain_vertices[1] = [drain_size, -box_size, -drain_size]
+drain_vertices[2] = [drain_size, -box_size, drain_size]
+drain_vertices[3] = [-drain_size, -box_size, drain_size]
 
-drain_indices = ti.field(dtype=ti.i32, shape=(2,))
-drain_indices.from_numpy(np.array([0, 1]))
+drain_indices = ti.field(dtype=ti.i32, shape=(8,))
+drain_indices.from_numpy(np.array([0, 1, 1, 2, 2, 3, 3, 0]))
 
 x = np.random.uniform(low=-box_size, high=box_size, size=(n, 3))
 v = np.random.uniform(low=0.9*Vrms, high=1.1*Vrms, size=x.shape)
@@ -51,7 +51,7 @@ canvas.set_background_color((1, 1, 1))
 scene = window.get_scene()
 camera = ti.ui.Camera()
 
-show_drain = False
+show_drain = True
 
 while window.running:
     scene.lines(vertices=line_vertices, width=0.5, indices=line_indices, color=black)
@@ -59,8 +59,8 @@ while window.running:
     if show_drain:
         scene.lines(vertices=drain_vertices, width=0.5, indices=drain_indices, color=black)
 
-    # x, v = particle_motion(x, v, a, dt, box_size, ball_radius)
-    # ball_center.from_numpy(x)
+    x, v = particle_motion(x, v, a, dt, box_size, ball_radius)
+    ball_center.from_numpy(x)
 
     camera.position(0.0, 0.0, 3)
     camera.lookat(0.0, 0.0, 0)
