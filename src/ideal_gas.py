@@ -34,8 +34,8 @@ line_indices.from_numpy(np.array([0, 1, 1, 2, 2, 3, 3, 0, 0, 4, 1, 5, 2, 6, 3, 7
 drain_vertices = ti.Vector.field(3, dtype=float, shape=(2,))
 drain_vertices[0] = [-drain_size, 0, -drain_size]
 drain_vertices[1] = [drain_size, 0, -drain_size]
-# drain_vertices[2] = [drain_size, -box_size, drain_size]
-# drain_vertices[3] = [-drain_size, -box_size, drain_size]
+drain_vertices[2] = [drain_size, -box_size, drain_size]
+drain_vertices[3] = [-drain_size, -box_size, drain_size]
 
 drain_indices = ti.field(dtype=ti.i32, shape=(2,))
 drain_indices.from_numpy(np.array([0, 1]))
@@ -52,7 +52,7 @@ canvas.set_background_color((1, 1, 1))
 scene = window.get_scene()
 camera = ti.ui.Camera()
 
-show_drain = False
+show_drain = True
 inject_particles = True
 
 while window.running:
@@ -68,9 +68,10 @@ while window.running:
     # Inject particles
     if inject_particles:
         x, v = add_particle(x, v, a, dt, box_size, ball_radius, R, m, T)
-        # ball_center = ti.Vector.field(3, dtype=float, shape=(n+1,))
-        # ball_center.from_numpy(x)
-        # n += 1
+        n += 1
+        ball_center = ti.Vector.field(3, dtype=float, shape=(n,))
+        ball_center.from_numpy(x)
+
 
     camera.position(0.0, 0.0, 3)
     camera.lookat(0.0, 0.0, 0)
