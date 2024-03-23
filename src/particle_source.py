@@ -7,7 +7,9 @@ import math
 # @ti.kernel
 def add_particle(x, v, a, dt, box_size, ball_radius, R, m, T):
     Vrms = math.sqrt(3 * R * T / m) 
-    source_coords = np.array([[0,box_size,0]])
+
+    # Inject the particles just below the boundary so they don't get stuck.
+    source_coords = np.array([[0,box_size-(ball_radius+.001),0]])
 
     # Start with a simple perfectly straight injection of particles. I will update this with variance.
     particle_v = np.array([[0, -Vrms, 0]])

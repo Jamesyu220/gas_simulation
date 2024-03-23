@@ -54,7 +54,10 @@ camera = ti.ui.Camera()
 
 show_drain = True
 inject_particles = True
+injection_rate = dt*10
+elapsed_time = 0
 
+#count = 0
 while window.running:
     scene.lines(vertices=line_vertices, width=0.5, indices=line_indices, color=black)
 
@@ -66,12 +69,16 @@ while window.running:
     ball_center.from_numpy(x)
 
     # Inject particles
-    if inject_particles:
+    if inject_particles and (elapsed_time >= injection_rate):
         x, v = add_particle(x, v, a, dt, box_size, ball_radius, R, m, T)
         n += 1
         ball_center = ti.Vector.field(3, dtype=float, shape=(n,))
         ball_center.from_numpy(x)
+        elapsed_time = 0
+    
 
+    #print("x: ", x[-5:])
+    #print("v: ", v[-5:])
 
     camera.position(0.0, 0.0, 3)
     camera.lookat(0.0, 0.0, 0)
@@ -80,10 +87,12 @@ while window.running:
     scene.point_light(pos=(0, 1, 2), color=(1, 1, 1))
     scene.ambient_light((0.5, 0.5, 0.5))
     scene.particles(ball_center, radius=ball_radius, color=(0.5, 0.42, 0.8))
-
+    #count += 1
     # test_particle = ti.Vector.field(3, dtype=float, shape=(1,))
     # test_particle.from_numpy(np.array([[0,box_size,0]]))
     # scene.particles(test_particle, radius=ball_radius*5, color=(0.0, 0.0, 0.0))
     
     canvas.scene(scene)
     window.show()
+
+    elapsed_time += dt

@@ -1,5 +1,3 @@
-#import test_taichi
-
 # @ti.kernel
 def particle_motion(x, v, a, dt, box_size, ball_radius):
     v = v + a * dt
