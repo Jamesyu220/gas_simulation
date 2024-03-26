@@ -6,8 +6,9 @@ ti.init(arch=ti.cpu)  # Alternatively, ti.init(arch=ti.cpu), ti.init(arch=ti.vul
 from particles import particle_motion
 from particle_source import add_particle
 
-dt = 1e-5 #1e-4
-n = 100
+
+dt = 1e-5
+n = 10000
 R = 8.31
 ball_radius = 0.005
 ball_center = ti.Vector.field(3, dtype=float, shape=(n,))
@@ -31,14 +32,15 @@ line_vertices[7] = [-box_size, -box_size, box_size]
 line_indices = ti.field(dtype=ti.i32, shape=(24,))
 line_indices.from_numpy(np.array([0, 1, 1, 2, 2, 3, 3, 0, 0, 4, 1, 5, 2, 6, 3, 7, 4, 5, 5, 6, 6, 7, 7, 4]))
 
-drain_vertices = ti.Vector.field(3, dtype=float, shape=(2,))
-drain_vertices[0] = [-drain_size, 0, -drain_size]
-drain_vertices[1] = [drain_size, 0, -drain_size]
+
+drain_vertices = ti.Vector.field(3, dtype=float, shape=(4,))
+drain_vertices[0] = [-drain_size, -box_size, -drain_size]
+drain_vertices[1] = [drain_size, -box_size, -drain_size]
 drain_vertices[2] = [drain_size, -box_size, drain_size]
 drain_vertices[3] = [-drain_size, -box_size, drain_size]
 
-drain_indices = ti.field(dtype=ti.i32, shape=(2,))
-drain_indices.from_numpy(np.array([0, 1]))
+drain_indices = ti.field(dtype=ti.i32, shape=(8,))
+drain_indices.from_numpy(np.array([0, 1, 1, 2, 2, 3, 3, 0]))
 
 x = np.random.uniform(low=-box_size, high=box_size, size=(n, 3))
 v = np.random.uniform(low=0.9*Vrms, high=1.1*Vrms, size=x.shape)
@@ -79,6 +81,7 @@ while window.running:
 
     #print("x: ", x[-5:])
     #print("v: ", v[-5:])
+
 
     camera.position(0.0, 0.0, 3)
     camera.lookat(0.0, 0.0, 0)
