@@ -4,6 +4,8 @@ import math
 ti.init(arch=ti.cpu)  # Alternatively, ti.init(arch=ti.cpu), ti.init(arch=ti.vulkan)
 
 from particles import particle_motion
+from particle_source import add_particle
+
 
 dt = 1e-5
 n = 10000
@@ -30,6 +32,7 @@ line_vertices[7] = [-box_size, -box_size, box_size]
 line_indices = ti.field(dtype=ti.i32, shape=(24,))
 line_indices.from_numpy(np.array([0, 1, 1, 2, 2, 3, 3, 0, 0, 4, 1, 5, 2, 6, 3, 7, 4, 5, 5, 6, 6, 7, 7, 4]))
 
+
 drain_vertices = ti.Vector.field(3, dtype=float, shape=(4,))
 drain_vertices[0] = [-drain_size, -box_size, -drain_size]
 drain_vertices[1] = [drain_size, -box_size, -drain_size]
@@ -52,15 +55,33 @@ scene = window.get_scene()
 camera = ti.ui.Camera()
 
 show_drain = True
+inject_particles = True
+injection_rate = dt*10
+elapsed_time = 0
 
+#count = 0
 while window.running:
     scene.lines(vertices=line_vertices, width=0.5, indices=line_indices, color=black)
 
     if show_drain:
         scene.lines(vertices=drain_vertices, width=0.5, indices=drain_indices, color=black)
 
+    # Update particle position and velocity
     x, v = particle_motion(x, v, a, dt, box_size, ball_radius)
     ball_center.from_numpy(x)
+
+    # Inject particles
+    if inject_particles and (elapsed_time >= injection_rate):
+        x, v = add_particle(x, v, a, dt, box_size, ball_radius, R, m, T)
+        n += 1
+        ball_center = ti.Vector.field(3, dtype=float, shape=(n,))
+        ball_center.from_numpy(x)
+        elapsed_time = 0
+    
+
+    #print("x: ", x[-5:])
+    #print("v: ", v[-5:])
+
 
     camera.position(0.0, 0.0, 3)
     camera.lookat(0.0, 0.0, 0)
@@ -69,5 +90,12 @@ while window.running:
     scene.point_light(pos=(0, 1, 2), color=(1, 1, 1))
     scene.ambient_light((0.5, 0.5, 0.5))
     scene.particles(ball_center, radius=ball_radius, color=(0.5, 0.42, 0.8))
+    #count += 1
+    # test_particle = ti.Vector.field(3, dtype=float, shape=(1,))
+    # test_particle.from_numpy(np.array([[0,box_size,0]]))
+    # scene.particles(test_particle, radius=ball_radius*5, color=(0.0, 0.0, 0.0))
+    
     canvas.scene(scene)
     window.show()
+
+    elapsed_time += dt
