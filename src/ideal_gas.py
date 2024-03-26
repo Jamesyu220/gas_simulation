@@ -1,5 +1,6 @@
 import taichi as ti
 import numpy as np
+import time
 import math
 ti.init(arch=ti.cpu)  # Alternatively, ti.init(arch=ti.cpu), ti.init(arch=ti.vulkan)
 
@@ -47,7 +48,7 @@ v = np.random.uniform(low=0.9*Vrms, high=1.1*Vrms, size=x.shape)
 a = np.array([0.0, -9.8, 0.0])
 ball_center.from_numpy(x)
 
-window = ti.ui.Window("Taichi Gascd  Simulation on GGUI", (1024, 1024),
+window = ti.ui.Window("Taichi Gascd  Simulation on GGUI", (480, 320),
                       vsync=True)
 canvas = window.get_canvas()
 canvas.set_background_color((1, 1, 1))
@@ -66,10 +67,17 @@ while window.running:
     if show_drain:
         scene.lines(vertices=drain_vertices, width=0.5, indices=drain_indices, color=black)
 
+    timeStamp = time.time()
+    scale = box_size * (1 + math.sin(timeStamp))
+    line_vertices[0] = [-box_size, box_size * scale, -box_size]
+    line_vertices[1] = [box_size, box_size * scale, -box_size]
+    line_vertices[2] = [box_size, box_size * scale, box_size]
+    line_vertices[3] = [-box_size, box_size * scale, box_size]
+
     # Update particle position and velocity
     x, v = particle_motion(x, v, a, dt, box_size, ball_radius)
     ball_center.from_numpy(x)
-
+    
     # Inject particles
     if inject_particles and (elapsed_time >= injection_rate):
         x, v = add_particle(x, v, a, dt, box_size, ball_radius, R, m, T)
@@ -77,13 +85,8 @@ while window.running:
         ball_center = ti.Vector.field(3, dtype=float, shape=(n,))
         ball_center.from_numpy(x)
         elapsed_time = 0
-    
 
-    #print("x: ", x[-5:])
-    #print("v: ", v[-5:])
-
-
-    camera.position(0.0, 0.0, 3)
+    camera.position(5.0, 5.0, 5)
     camera.lookat(0.0, 0.0, 0)
     scene.set_camera(camera)
 
