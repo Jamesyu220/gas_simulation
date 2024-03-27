@@ -48,7 +48,7 @@ def boundary_check(x, y, z)->int:
 
 
 # @ti.kernel
-def border_collision(v_x, v_y, v_z x, y, z, heat_factor):
+def border_collision(v_x, v_y, v_z, x, y, z, heat_factor):
     """
     Runs every step of d_t
     v_x, v_y: velocity components
@@ -56,7 +56,7 @@ def border_collision(v_x, v_y, v_z x, y, z, heat_factor):
     heat_factor: if the container is heated, 
     adds energy in the form of a velocity multiplier to the particle
     """
-    hitsBounds = boundary_check(x, y)
+    hitsBounds = boundary_check(x, y, z)
     if hitsBounds == 1:
         #reverse x velocity; 
         v_x = -1 * heat_factor * v_x
@@ -79,5 +79,21 @@ def border_collision(v_x, v_y, v_z x, y, z, heat_factor):
         heat_factor = ti.math.sqrt(heat_factor)
         #reverse both velocities
         v_x = -1 * heat_factor * v_x
+        v_z = -1 * heat_factor * v_z
+    elif hitsBounds == 6:
+        #since the increase in velocity is being applied to two components
+        #use the square root as a coefficient 
+        heat_factor = ti.math.sqrt(heat_factor)
+        #reverse both velocities
+        v_z = -1 * heat_factor * v_z
         v_y = -1 * heat_factor * v_y
+    elif hitsBounds == 7:
+        #since the increase in velocity is being applied to two components
+        #use the square root as a coefficient 
+        heat_factor = ti.math.sqrt(heat_factor)
+        #reverse both velocities
+        v_x = -1 * heat_factor * v_x
+        v_y = -1 * heat_factor * v_y
+        v_z = -1 * heat_factor * v_z
+
     return v_x, v_y, v_z
