@@ -54,36 +54,42 @@ def border_collision(v_x, v_y, v_z, x, y, z, heat_factor):
     v_x, v_y: velocity components
     x, y: location of the center of mass of the particle
     heat_factor: if the container is heated, 
-    adds energy in the form of a velocity multiplier to the particle
+    adds energy in the form of a coefficient of velocity to the particle
     """
     hitsBounds = boundary_check(x, y, z)
-    if hitsBounds == 1:
+    if hitsBounds == 1:  
+        #increase velocity in only the direction the particle is being reflected    
+        heat_factor = (heat_factor * ti.math.dot([v_x, v_y, v_z], [v_x, v_y, v_z]) \
+                    - ti.math.dot([v_y, v_z], [v_y, v_z])) / ti.math.pow(v_x, 2) 
         #reverse x velocity; 
         v_x = -1 * heat_factor * v_x
     elif hitsBounds == 2:
+        heat_factor = (heat_factor * ti.math.dot([v_x, v_y, v_z], [v_x, v_y, v_z]) \
+                    - ti.math.dot([v_x, v_z], [v_x, v_z])) / ti.math.pow(v_y, 2) 
         #reverse y velocity; 
         v_y = -1 * heat_factor *  v_y
     elif hitsBounds == 3:
+        heat_factor = (heat_factor * ti.math.dot([v_x, v_y, v_z], [v_x, v_y, v_z]) \
+                    - ti.math.dot([v_x, v_y], [v_x, v_y])) / ti.math.pow(v_z, 2) 
         #reverse y velocity; 
         v_z = -1 * heat_factor *  v_z
     elif hitsBounds == 4:
-        #since the increase in velocity is being applied to two components
-        #use the square root as a coefficient 
-        heat_factor = ti.math.sqrt(heat_factor)
+        #increase velocity in only the 2 directions the particle is being reflected    
+        heat_factor = (heat_factor * ti.math.dot([v_x, v_y, v_z], [v_x, v_y, v_z]) \
+                    - ti.math.pow(v_z, 2)) / ti.math.dot([v_x, v_y], [v_x, v_y]) 
+        
         #reverse both velocities
         v_x = -1 * heat_factor * v_x
         v_y = -1 * heat_factor * v_y
     elif hitsBounds == 5:
-        #since the increase in velocity is being applied to two components
-        #use the square root as a coefficient 
-        heat_factor = ti.math.sqrt(heat_factor)
+        heat_factor = (heat_factor * ti.math.dot([v_x, v_y, v_z], [v_x, v_y, v_z]) \
+                    - ti.math.pow(v_y, 2)) / ti.math.dot([v_x, v_z], [v_x, v_z]) 
         #reverse both velocities
         v_x = -1 * heat_factor * v_x
         v_z = -1 * heat_factor * v_z
     elif hitsBounds == 6:
-        #since the increase in velocity is being applied to two components
-        #use the square root as a coefficient 
-        heat_factor = ti.math.sqrt(heat_factor)
+        heat_factor = (heat_factor * ti.math.dot([v_x, v_y, v_z], [v_x, v_y, v_z]) \
+                    - ti.math.pow(v_x, 2)) / ti.math.dot([v_y, v_z], [v_y, v_z]) 
         #reverse both velocities
         v_z = -1 * heat_factor * v_z
         v_y = -1 * heat_factor * v_y
