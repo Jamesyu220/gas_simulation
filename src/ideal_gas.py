@@ -6,7 +6,7 @@ ti.init(arch=ti.cpu)  # Alternatively, ti.init(arch=ti.cpu), ti.init(arch=ti.vul
 
 from particles_motion import particle_motion, border_collisions
 from particle_source import add_particle
-from temperature import cal_temperature
+from temperature import get_v_abs, cal_temperature
 
 box_size = 0.8
 drain_size = 0.1
@@ -16,9 +16,6 @@ ymin = -box_size
 ymax = box_size
 zmin = -box_size
 zmax = box_size
-
-surface_area = 6 * (2 * box_size) ** 2
-Volume = (2 * box_size) ** 3
 
 line_vertices = ti.Vector.field(3, dtype=float, shape=(8,))
 line_vertices[0] = [xmin, ymax, zmin]
@@ -51,17 +48,14 @@ ball_center = ti.Vector.field(3, dtype=float, shape=(n,))
 ball_color = ti.Vector.field(3, dtype=float, shape=(n,))
 black = (0.0, 0.0, 0.0)
 T_set = 300
-T_actual = 300
+T_actual = None
 m = 0.032
 Vrms = math.sqrt(3 * R * T_set / m)
 
-clr_ori = np.array([0.0, 0.0, 0.545])
-clr_ins = np.array([1.0, 0.0, 0.0])
-ball_color.from_numpy(np.vstack((np.tile(clr_ori, (3750, 1)), np.tile(clr_ins, (1250, 1)))))
-
 pos = np.random.uniform(low=-box_size, high=box_size, size=(n, 3))
 
-v_abs = np.random.uniform(low=0.9*Vrms, high=1.1*Vrms, size=(n, 1))
+v_error_ratio = 1e-3
+v_abs = np.random.uniform(low=(1 - v_error_ratio)*Vrms, high=(1 + v_error_ratio)*Vrms, size=(n, 1))
 theta = np.random.uniform(high=2*np.pi, size=(n, 1))
 phi = np.random.uniform(high=2*np.pi, size=(n, 1))
 vx = v_abs * np.cos(phi) * np.cos(theta)
@@ -72,6 +66,9 @@ v = np.hstack((vx, vy, vz))
 a = np.array([0.0, -9.8, 0.0])
 
 ball_center.from_numpy(pos)
+
+blue = np.array([[0.0, 0.0, 0.545]])
+red = np.array([[0.6, 0.0, 0.0]])
 
 window = ti.ui.Window("Taichi Gascd  Simulation on GGUI", (480, 320),
                       vsync=True)
@@ -84,8 +81,10 @@ show_drain = True
 inject_particles = False
 injection_rate = dt*10
 elapsed_time = 0
-J = 0
-Pressure = 0
+iter = 0
+V_avg = (2 * box_size) ** 3
+P_avg = 0.0
+T_avg = 0.0
 
 #count = 0
 while window.running:
@@ -94,6 +93,7 @@ while window.running:
     if show_drain:
         scene.lines(vertices=drain_vertices, width=0.5, indices=drain_indices, color=black)
 
+    iter += 1
     # timeStamp = time.time()
     ymax = box_size * (1 + 0.5 * math.sin(elapsed_time * 300))
     line_vertices[0] = [xmin, ymax, zmin]
@@ -104,18 +104,26 @@ while window.running:
     # Update particle position and velocity
     pos, v = particle_motion(pos, v, a, dt)
 
-    pos, v, delta_J = border_collisions(pos, v, m, xmin, xmax, ymin, ymax, zmin, zmax)
+    pos, v, P = border_collisions(pos, v, m, dt, xmin, xmax, ymin, ymax, zmin, zmax)
     ball_center.from_numpy(pos)
 
-    J += delta_J
+    v_abs = get_v_abs(v)
+    clr = blue * (1.3 * Vrms - v_abs) + red * (v_abs - Vrms)
+    clr = np.clip(clr, 0, 1)
+    ball_color.from_numpy(clr)
+
+    P_avg = P_avg * (iter - 1)/iter + P / iter
+
+    V = (xmax - xmin) * (ymax - ymin) * (zmax - zmin)
 
     T_actual = cal_temperature(m, R, v)
+    T_avg = T_avg * (iter - 1)/iter + T_actual / iter
 
-    if elapsed_time > 0 and int(elapsed_time / dt) % 1000 == 0:
-        F = J / (1000 * dt)
-        Pressure = F / surface_area
-        print(f"PV / nRT = {(Pressure * Volume) / (n * R * T_actual)}")
-        J = 0
+    # if abs((P * V) / (n * R * T_actual) - 1.0) > 0.05:
+    #     print(f"Big error: PV/nRT = {(P * V) / (n * R * T_actual)}")
+
+    if iter % 100 == 0:
+        print(f"PV / nRT = {(P_avg * V_avg) / (n * R * T_avg)}")
     
     # Inject particles
     if inject_particles and (elapsed_time >= injection_rate):
