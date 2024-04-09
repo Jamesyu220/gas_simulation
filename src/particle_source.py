@@ -1,7 +1,6 @@
 # import taichi as ti
 import numpy as np
 import math
-# ti.init(arch=ti.cpu)  # Alternatively, ti.init(arch=ti.cpu), ti.init(arch=ti.vulkan)
 
 
 # @ti.kernel
@@ -33,6 +32,9 @@ def add_particle(x, v, a, dt, box_size, ball_radius, R, m, T):
 
     return x, v
 
+def add_diffusion_particles(x, v, a, dt, box_size, ball_radius, R, m, T, n):
+    Vrms = math.sqrt(3 * R * T / m)
+    
 
 # def particle_motion(x, v, a, dt, box_size, ball_radius):
 #     v = v + a * dt

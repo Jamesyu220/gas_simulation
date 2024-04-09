@@ -5,7 +5,7 @@ import math
 ti.init(arch=ti.cpu)  # Alternatively, ti.init(arch=ti.cpu), ti.init(arch=ti.vulkan)
 
 from particles_motion import particle_motion, border_collisions
-from particle_source import add_particle
+from particle_source import add_particle, add_diffusion_particles
 from temperature import get_v_abs, cal_temperature
 
 box_size = 0.8
@@ -77,8 +77,12 @@ canvas.set_background_color((1, 1, 1))
 scene = window.get_scene()
 camera = ti.ui.Camera()
 
+# Set toggles
 show_drain = True
-inject_particles = False
+increase_volume = False
+init_diffusion_particles = False
+inject_particles = True
+
 injection_rate = dt*10
 elapsed_time = 0
 iter = 0
@@ -95,11 +99,12 @@ while window.running:
 
     iter += 1
     # timeStamp = time.time()
-    ymax = box_size * (1 + 0.5 * math.sin(elapsed_time * 300))
-    line_vertices[0] = [xmin, ymax, zmin]
-    line_vertices[1] = [xmax, ymax, zmin]
-    line_vertices[2] = [xmax, ymax, zmax]
-    line_vertices[3] = [xmin, ymax, zmax]
+    if increase_volume:
+        ymax = box_size * (1 + 0.5 * math.sin(elapsed_time * 300))
+        line_vertices[0] = [xmin, ymax, zmin]
+        line_vertices[1] = [xmax, ymax, zmin]
+        line_vertices[2] = [xmax, ymax, zmax]
+        line_vertices[3] = [xmin, ymax, zmax]
 
     # Update particle position and velocity
     pos, v = particle_motion(pos, v, a, dt)
@@ -127,11 +132,20 @@ while window.running:
     
     # Inject particles
     if inject_particles and (elapsed_time >= injection_rate):
-        x, v = add_particle(x, v, a, dt, box_size, ball_radius, R, m, T)
+        pos, v = add_particle(pos, v, a, dt, box_size, ball_radius, R, m, T_set)
         n += 1
         ball_center = ti.Vector.field(3, dtype=float, shape=(n,))
-        ball_center.from_numpy(x)
+        ball_center.from_numpy(pos)
         elapsed_time = 0
+
+    # Initialize diffusion testing by adding bulk particles in one part of the box
+    if init_diffusion_particles:
+        num_diffus_particles = 100
+        x, v = add_diffusion_particles(x, v, a, dt, box_size, ball_radius, R, m, T_set, num_diffus_particles)
+        
+
+
+
 
     camera.position(2.0, 2.0, 4.0)
     camera.lookat(0.0, 0.0, 0)
