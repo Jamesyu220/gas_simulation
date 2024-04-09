@@ -4,7 +4,7 @@ import math
 
 
 # @ti.kernel
-def add_particle(x, v, a, dt, box_size, ball_radius, R, m, T):
+def add_particle(pos, v, a, dt, box_size, ball_radius, R, m, T):
     Vrms = math.sqrt(3 * R * T / m) 
 
     # Inject the particles just below the boundary so they don't get stuck.
@@ -27,19 +27,32 @@ def add_particle(x, v, a, dt, box_size, ball_radius, R, m, T):
     #particle_v = np.random.uniform(low=0.9*Vrms, high=1.1*Vrms, size=(1,3))
     
     # Add particle to particle vector
-    x = np.append(x, source_coords, axis=0)
+    pos = np.append(pos, source_coords, axis=0)
     v = np.append(v, particle_v, axis=0)
 
-    return x, v
+    return pos, v
 
-def add_diffusion_particles(x, v, a, dt, box_size, ball_radius, R, m, T, n):
+def add_diffusion_particles(pos, v, a, dt, box_size, ball_radius, R, m, T, n):
     Vrms = math.sqrt(3 * R * T / m)
+
+    pos_diffus = np.random.uniform(low=-box_size, high=-box_size/2, size=(n, 3))
+
+    v_error_ratio = 1e-3
+    v_abs = np.random.uniform(low=(1 - v_error_ratio)*Vrms, high=(1 + v_error_ratio)*Vrms, size=(n, 1))
+    theta = np.random.uniform(high=2*np.pi, size=(n, 1))
+    phi = np.random.uniform(high=2*np.pi, size=(n, 1))
+    vx = v_abs * np.cos(phi) * np.cos(theta)
+    vy = v_abs * np.cos(phi) * np.sin(theta)
+    vz = v_abs * np.sin(phi)
+    v_diffus = np.hstack((vx, vy, vz))
+
+    pos = np.append(pos, pos_diffus, axis=0)
+    v = np.append(v, v_diffus, axis=0)
+
+    # print("THis is pos")
+    # print(np.shape(pos))
+    # print("This is v:")
+    # print(np.shape(v))
+
+    return pos, v
     
-
-# def particle_motion(x, v, a, dt, box_size, ball_radius):
-#     v = v + a * dt
-#     boundary_condition = (x <= -box_size + ball_radius) | (x >= box_size - ball_radius)
-#     v[boundary_condition] = v[boundary_condition] * (-1)
-#     x = x + v * dt
-
-#     return x, v
