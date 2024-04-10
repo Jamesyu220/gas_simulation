@@ -67,3 +67,8 @@ def border_collisions(pos, v, m, dt, xmin, xmax, ymin, ymax, zmin, zmax):
     P = (P1 + P2 + P3 + P4 + P5 + P6) / 6.0
 
     return pos, v, P
+
+def emit_from_drain(pos, v, xmin, drain_size):
+    drain_condition = (pos[:, 0] <= xmin) & (abs(pos[:, 1]) <= drain_size) & (abs(pos[:, 2]) <= drain_size) & (v[:, 0] < 0)
+    # print(f"shape of drain condition: {drain_condition.shape}")
+    return np.argwhere(drain_condition).flatten()
