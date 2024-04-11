@@ -1,7 +1,10 @@
+12
+
 import taichi as ti
 import numpy as np
 import time
 import math
+import tkinter as tk
 ti.init(arch=ti.cpu)  # Alternatively, ti.init(arch=ti.cpu), ti.init(arch=ti.vulkan)
 
 from particles_motion import particle_motion, border_collisions
@@ -70,8 +73,13 @@ ball_center.from_numpy(pos)
 blue = np.array([[0.0, 0.0, 0.545]])
 red = np.array([[0.6, 0.0, 0.0]])
 
-window = ti.ui.Window("Taichi Gascd  Simulation on GGUI", (480, 320),
-                      vsync=True)
+#Enlarge the window
+root = tk.Tk()
+root.withdraw()
+width = root.winfo_screenwidth()
+height = root.winfo_screenheight()
+
+window = ti.ui.Window("Gas Simulation", (int(width/2.5), int(height/2.5)), vsync=True)
 canvas = window.get_canvas()
 canvas.set_background_color((1, 1, 1))
 scene = window.get_scene()
@@ -95,7 +103,7 @@ while window.running:
 
     iter += 1
     # timeStamp = time.time()
-    ymax = box_size * (1 + 0.5 * math.sin(elapsed_time * 300))
+    ymax = box_size * (1 + 0.8 * math.sin(elapsed_time * 300))
     line_vertices[0] = [xmin, ymax, zmin]
     line_vertices[1] = [xmax, ymax, zmin]
     line_vertices[2] = [xmax, ymax, zmax]
@@ -123,7 +131,12 @@ while window.running:
     #     print(f"Big error: PV/nRT = {(P * V) / (n * R * T_actual)}")
 
     if iter % 100 == 0:
-        print(f"PV / nRT = {(P_avg * V_avg) / (n * R * T_avg)}")
+        print("========================================")
+        print(f"PV / nRT = {(P_avg * V) / (n * R * T_avg)}")
+        print(f"P_avg = {P_avg} Pa")
+        print(f"V = {V} m^3")
+        print(f"n = {n}")
+        print(f"T_avg = {T_avg} K")
     
     # Inject particles
     if inject_particles and (elapsed_time >= injection_rate):
