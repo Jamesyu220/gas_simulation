@@ -1,4 +1,5 @@
 import numpy as np
+from src.temperature import get_v_abs
 # @ti.kernel
 def particle_motion(pos, v, a, dt):
     v = v + a * dt
@@ -6,13 +7,46 @@ def particle_motion(pos, v, a, dt):
 
     return pos, v
 
-def border_collisions(pos, v, m, dt, xmin, xmax, ymin, ymax, zmin, zmax):
+def particle_collision(pos, v, ball_radius):
+    pos_x = pos[:, 0:1]
+    pos_y = pos[:, 1:2]
+    pos_z = pos[:, 2:3]
+
+    delta_x = np.absolute(pos_x - pos_x.T)
+    delta_y = np.absolute(pos_y - pos_y.T)
+    delta_z = np.absolute(pos_z - pos_z.T)
+
+    # dist = np.square(delta_x) + np.square(delta_y) + np.square(delta_z)
+    # min_dist = np.min(dist, axis=1)
+    # closest_neighbor = np.argmin(dist, axis=1)
+    collision_condition = (delta_x < 2 * ball_radius) & (delta_y < 2 * ball_radius) & (delta_z < 2 * ball_radius)
+    collision_neighbor = np.argwhere(collision_condition)
+    _, idx = np.unique(collision_neighbor[:, 0], return_index=True)
+    collision_neighbor = collision_neighbor[idx, :]
+    v[collision_neighbor[:, 0], :] = v[collision_neighbor[:, 1], :]
+
+    return v
+
+
+def border_collisions(pos, v, m, dt, xmin, xmax, ymin, ymax, zmin, zmax, add_heater, heater_xmin, heater_xmax, heater_zmin, heater_zmax, delta_E):
+    # Bottom area where the heater affects particles
+
     pos_x = pos[:, 0]
     pos_y = pos[:, 1]
     pos_z = pos[:, 2]
     v_x = v[:, 0]
     v_y = v[:, 1]
     v_z = v[:, 2]
+
+    # Detect particles hitting the bottom area above the heater
+    # bc_y_min_heater = (pos_y <= ymin) & (pos_x >= heater_xmin) & (pos_x <= heater_xmax) & (pos_z >= heater_zmin) & (pos_z <= heater_zmax)
+    # pos[bc_y_min_heater, 1] = ymin
+    # bc_y_min_heater = bc_y_min_heater & (v_y < 0)
+
+    # # Update velocity for particles hitting the heater area
+    # v[bc_y_min_heater, 1] *= -1
+    # v_abs = get_v_abs(v[bc_y_min_heater])
+    # v[bc_y_min_heater] *= np.sqrt(1 + delta_E / (m * v_abs ** 2))
 
     # bc stands for boundary condition
     bc_x_min = (pos_x <= xmin)
@@ -34,8 +68,12 @@ def border_collisions(pos, v, m, dt, xmin, xmax, ymin, ymax, zmin, zmax):
     bc_y_min = (pos_y <= ymin)
     pos[bc_y_min, 1] = ymin
     bc_y_min = bc_y_min & (v_y < 0)
+    orginal_vy = v[bc_y_min, 1]
     v[bc_y_min, 1] *= -1
-    J3 = 2 * m * np.sum(v[bc_y_min, 1]).item()
+    if add_heater:
+        bc_heater = bc_y_min & (pos_x >= heater_xmin) & (pos_x <= heater_xmax) & (pos_z >= heater_zmin) & (pos_z <= heater_zmax)
+        v[bc_heater, 1] = np.sqrt(np.square(v[bc_heater, 1]) + 2 * delta_E / m)
+    J3 = m * np.sum(v[bc_y_min, 1] - orginal_vy).item()
     F3 = J3 / dt
     P3 = F3 / ((xmax  - xmin) * (zmax - zmin))
 
