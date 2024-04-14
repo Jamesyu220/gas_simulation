@@ -6,7 +6,7 @@ import tkinter as tk
 ti.init(arch=ti.cpu)  # Alternatively, ti.init(arch=ti.cpu), ti.init(arch=ti.vulkan)
 
 from src.particles_motion import particle_motion, particle_collision, border_collisions, emit_from_drain
-from src.particle_source import add_particle, add_diffusion_particles
+from src.particle_source import add_diffusion_particles
 from src.temperature import get_v_abs, cal_temperature
 
 box_size = 0.8
@@ -35,7 +35,6 @@ heater_length = 0.8  # Length to match the width of the box
 heater_width = 0.8   # Width to match the depth of the box
 heater_height = 0.05      # Height of the heater box as specified
 heater_gap = 0.1
-delta_E = 50.0   # 500kW heater
 
 # Since the heater is now smaller than the box, we will center it right below the box.
 # Calculate the starting positions (xmin and zmin for the heater) to center it
@@ -85,6 +84,8 @@ T_actual = None
 m = 0.032
 Vrms = math.sqrt(3 * R * T_set / m)
 
+heater_E = 1.5 * R * 450
+
 pos = np.random.uniform(low=-box_size, high=box_size, size=(n, 3))
 
 v_error_ratio = 1e-3
@@ -97,6 +98,8 @@ vz = v_abs * np.sin(phi)
 v = np.hstack((vx, vy, vz))
 
 a = np.array([0.0, -9.8, 0.0])
+
+# clr = np.zeros((n, 3))
 
 pos = pos.astype(np.float32)
 ball_center.from_numpy(pos)
@@ -122,8 +125,8 @@ camera = ti.ui.Camera()
 show_drain = False
 inject_particles = False
 add_heater = True
-change_volume = False
-init_diffusion_particles = True
+shake = True
+init_diffusion_particles = False
 injection_rate = dt*10
 elapsed_time = 0
 iter = 0
@@ -133,7 +136,10 @@ T_avg = 0.0
 n_avg = 0.0
 num_emit = 0
 num_emit_total = 0
+num_data = 0
 
+# file = open("data/pt_n1000_v16.txt", "w")
+file_tmp = open("data/temp-time_shake.txt", "w")
 
 #count = 0
 while window.running:
@@ -144,7 +150,7 @@ while window.running:
     if add_heater:
         scene.lines(vertices=heater_vertices, width=0.5, indices=heater_indices, color=(1, 0, 0))  # Heater color
 
-    if change_volume:
+    if shake:
         ymax = box_size * (1 + 0.8 * math.sin(elapsed_time * 300))
         line_vertices[0] = [xmin, ymax, zmin]
         line_vertices[1] = [xmax, ymax, zmin]
@@ -153,12 +159,12 @@ while window.running:
 
     # Initialize diffusion testing by adding bulk particles in one part of the box
     if init_diffusion_particles:
-        num_diffus_particles = 100
-        pos, v = add_diffusion_particles(pos, v, a, dt, box_size, ball_radius, R, m, T_set, num_diffus_particles)
+        num_diffus_particles = 10
+        pos, v = add_diffusion_particles(pos, v, box_size, R, T_actual, m, num_diffus_particles)
 
         n += num_diffus_particles
-        ball_center = ti.Vector.field(3, dtype=float, shape=(n,))
-        ball_center.from_numpy(pos)
+        ball_center = ti.Vector.field(3, dtype=ti.f32, shape=(n,))
+        ball_color = ti.Vector.field(3, dtype=ti.f32, shape=(n,))
 
         init_diffusion_particles = False
 
@@ -181,7 +187,7 @@ while window.running:
 
     n_avg = n_avg * (iter - 1)/iter + n / iter
 
-    pos, v, P = border_collisions(pos, v, m, dt, xmin, xmax, ymin, ymax, zmin, zmax, add_heater, heater_xmin, heater_xmax, heater_zmin, heater_zmax, delta_E)
+    pos, v, P = border_collisions(pos, v, m, dt, xmin, xmax, ymin, ymax, zmin, zmax, add_heater, heater_xmin, heater_xmax, heater_zmin, heater_zmax, heater_E)
     pos = pos.astype(np.float32)
     ball_center.from_numpy(pos)
 
@@ -202,26 +208,50 @@ while window.running:
     # if abs((P * V) / (n * R * T_actual) - 1.0) > 0.05:
     #     print(f"Big error: PV/nRT = {(P * V) / (n * R * T_actual)}")
 
+    # if iter % 150 == 0:
+        # print(f"PV / nRT = {(P_avg * V_avg) / (n_avg * R * T_avg)}")
+        # print(f"T = {T_avg}, P = {P_avg}, V = {V_avg}, P/n = {P_avg * V_avg}")
+        # # file.write(f"{P_avg}, {n_avg}\n")
+        # num_data += 1
+        # if show_drain:
+        #     print(f"{num_emit} particles emit.")
+        #     num_emit_total += num_emit
+        #     num_emit = 0
+        
+        # if num_data == 300:
+        #     break
+
     if iter == 300:
+        # init_diffusion_particles = True
         print(f"PV / nRT = {(P_avg * V_avg) / (n_avg * R * T_avg)}")
-        print(f"current temperature is {T_actual}")
+        print(f"P = {P_avg}, T = {T_avg} P/T = {P_avg / T_avg}")
+        # file.write(f"{P_avg}, {T_avg}\n")
+        file_tmp.write(f"{T_avg}, {elapsed_time}\n")
+        num_data += 1
         if show_drain:
             print(f"{num_emit} particles emit.")
             num_emit_total += num_emit
             num_emit = 0
+        
+        if T_avg >= 400:
+            print(f"End at iteration = {num_data}")
+            break
+
+        # ymax = box_size * (0.25 + 0.05 * num_data)
+        # ymin = -box_size * (0.25 + 0.05 * num_data)
+        # line_vertices[0] = [xmin, ymax, zmin]
+        # line_vertices[1] = [xmax, ymax, zmin]
+        # line_vertices[2] = [xmax, ymax, zmax]
+        # line_vertices[3] = [xmin, ymax, zmax]
+        # line_vertices[4] = [xmin, ymin, zmin]
+        # line_vertices[5] = [xmax, ymin, zmin]
+        # line_vertices[6] = [xmax, ymin, zmax]
+        # line_vertices[7] = [xmin, ymin, zmax]
         P_avg = 0.0
         V_avg = 0.0
         n_avg = 0.0
         T_avg = 0.0
         iter = 0
-    
-    # Inject particles
-    if inject_particles and (elapsed_time >= injection_rate):
-        x, v = add_particle(x, v, a, dt, box_size, ball_radius, R, m, T)
-        n += 1
-        ball_center = ti.Vector.field(3, dtype=ti.f32, shape=(n,))
-        ball_center.from_numpy(x)
-        elapsed_time = 0
 
     camera.position(2.0, 2.0, 4.0)
     camera.lookat(0.0, 0.0, 0)
@@ -238,3 +268,6 @@ while window.running:
     window.show()
 
     elapsed_time += dt
+
+# file.close()
+file_tmp.close()

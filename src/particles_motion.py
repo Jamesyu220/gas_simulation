@@ -28,7 +28,7 @@ def particle_collision(pos, v, ball_radius):
     return v
 
 
-def border_collisions(pos, v, m, dt, xmin, xmax, ymin, ymax, zmin, zmax, add_heater, heater_xmin, heater_xmax, heater_zmin, heater_zmax, delta_E):
+def border_collisions(pos, v, m, dt, xmin, xmax, ymin, ymax, zmin, zmax, add_heater, heater_xmin, heater_xmax, heater_zmin, heater_zmax, heater_E):
     # Bottom area where the heater affects particles
 
     pos_x = pos[:, 0]
@@ -72,7 +72,8 @@ def border_collisions(pos, v, m, dt, xmin, xmax, ymin, ymax, zmin, zmax, add_hea
     v[bc_y_min, 1] *= -1
     if add_heater:
         bc_heater = bc_y_min & (pos_x >= heater_xmin) & (pos_x <= heater_xmax) & (pos_z >= heater_zmin) & (pos_z <= heater_zmax)
-        v[bc_heater, 1] = np.sqrt(np.square(v[bc_heater, 1]) + 2 * delta_E / m)
+        new_Ey = heater_E - 0.5 * m * np.square(v[bc_heater, 0]) - 0.5 * m * np.square(v[bc_heater, 2])
+        v[bc_heater, 1] = np.sqrt(2 * new_Ey / m)
     J3 = m * np.sum(v[bc_y_min, 1] - orginal_vy).item()
     F3 = J3 / dt
     P3 = F3 / ((xmax  - xmin) * (zmax - zmin))
