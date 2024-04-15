@@ -139,7 +139,7 @@ num_emit_total = 0
 num_data = 0
 
 # file = open("data/pt_n1000_v16.txt", "w")
-file_tmp = open("data/temp-time_shake.txt", "w")
+# file_tmp = open("data/temp-time_shake.txt", "w")
 
 #count = 0
 while window.running:
@@ -226,7 +226,7 @@ while window.running:
         print(f"PV / nRT = {(P_avg * V_avg) / (n_avg * R * T_avg)}")
         print(f"P = {P_avg}, T = {T_avg} P/T = {P_avg / T_avg}")
         # file.write(f"{P_avg}, {T_avg}\n")
-        file_tmp.write(f"{T_avg}, {elapsed_time}\n")
+        # file_tmp.write(f"{T_avg}, {elapsed_time}\n")
         num_data += 1
         if show_drain:
             print(f"{num_emit} particles emit.")
@@ -270,4 +270,4 @@ while window.running:
     elapsed_time += dt
 
 # file.close()
-file_tmp.close()
+# file_tmp.close()
