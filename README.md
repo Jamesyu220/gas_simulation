@@ -44,14 +44,14 @@ To run this project,
 
 ## Evaluation and Results
 1. P-N Analysis  
-<img src="experiment_results/P-n.png?raw=true" alt="P-N Figure" width="1000"/>
+<img src="experiment_results/P-n.png?raw=true" alt="P-N Figure" width="500"/>
 
 2. P-V Analysis
-<img src="experiment_results/P-V.png?raw=true" alt="P-V Figure" width="1000"/>
-<img src="experiment_results/P-V_reciprocal.png?raw=true" alt="P-V Figure" width="1000"/>
+<img src="experiment_results/P-V.png?raw=true" alt="P-V Figure" width="500"/>
+<img src="experiment_results/P-V_reciprocal.png?raw=true" alt="P-V Figure" width="500"/>
 
 3. P-T Analysis
-<img src="experiment_results/P-T.png?raw=true" alt="P-T Figure" width="1000"/>
+<img src="experiment_results/P-T.png?raw=true" alt="P-T Figure" width="500"/>
 
 ## License
 Distributed under the Apache License. See LICENSE for more information.
