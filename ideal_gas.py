@@ -1,6 +1,5 @@
 import taichi as ti
 import numpy as np
-import time
 import math
 import tkinter as tk
 ti.init(arch=ti.vulkan)  # Alternatively, ti.init(arch=ti.cpu), ti.init(arch=ti.vulkan)
@@ -204,9 +203,7 @@ while window.running:
     T_actual = cal_temperature(m, R, v)
     T_avg = T_avg * (iter - 1)/iter + T_actual / iter
 
-    # if abs((P * V) / (n * R * T_actual) - 1.0) > 0.05:
-    #     print(f"Big error: PV/nRT = {(P * V) / (n * R * T_actual)}")
-
+    # get P-N data points
     # if iter % 150 == 0:
         # print(f"PV / nRT = {(P_avg * V_avg) / (n_avg * R * T_avg)}")
         # print(f"T = {T_avg}, P = {P_avg}, V = {V_avg}, P/n = {P_avg * V_avg}")
@@ -235,7 +232,8 @@ while window.running:
         if T_avg >= 395 or num_data == 50:
             print(f"End at iteration = {num_data}, final temperature is {T_avg}")
             break
-
+        
+        # adjust volume to do the P-V analysis
         # ymax = box_size * (0.25 + 0.05 * num_data)
         # ymin = -box_size * (0.25 + 0.05 * num_data)
         # line_vertices[0] = [xmin, ymax, zmin]
