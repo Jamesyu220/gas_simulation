@@ -4,11 +4,10 @@
 * [Introduction](#introduction)
 * [Technologies](#technologies)
 * [Getting Started](#getting-started)
-<!-- * [Demos and Examples](#demos-and-examples) -->
+* [Evaluation and Results](#evaluation-and-results)
 * [License](#license)
 * [Reference](#reference)
 * [Contributors](#contributors)
-<!-- * [Evaluation and Results](#evaluation-and-results) -->
 
 ## Introduction
 In this project, we plan to establish a system incorporating various types of ideal gas particles, potentially featuring two distinct kinds, such as Nitrogen and Oxygen. The goal is to simulate a fluid representation that mirrors the smooth behavior characteristic of gases, as to observe the intricate movements of gas molecules and, importantly, to assess whether the ideal gas law remains applicable when considering some other factors. Additionally, we will introduce several other operations into the system extending beyond the ideal gas model. These operations will involve adjusting the total volume, inserting and extracting particles strategically, and introducing external factors such as a heat source. We intend to use an agent-based model to simulate particles individually, while using numerical methods and high-performance libraries to optimize the performance of the simulation.  
@@ -37,13 +36,22 @@ To run this project,
     ```sh
     pip install -r requirements.txt
     ```
-4. Please go to the directory src and run:  
+4. Modify the main file ideal_gas.py according to what you want to measure, and store the output file under data/ directory, then run it:  
     ```sh
     python ideal_gas.py
     ```   
+5. Go to experiment.ipynb to visualize the result by Matplotlib.
 
-<!-- ## Demos and Examples
-To be done ...   -->
+## Evaluation and Results
+1. P-N Analysis  
+<img src="experiment_results/P-n.png?raw=true" alt="P-N Figure" width="1000"/>
+
+2. P-V Analysis
+<img src="experiment_results/P-V.png?raw=true" alt="P-V Figure" width="1000"/>
+<img src="experiment_results/P-V_reciprocal.png?raw=true" alt="P-V Figure" width="1000"/>
+
+3. P-T Analysis
+<img src="experiment_results/P-T.png?raw=true" alt="P-T Figure" width="1000"/>
 
 ## License
 Distributed under the Apache License. See LICENSE for more information.
