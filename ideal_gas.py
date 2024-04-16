@@ -36,7 +36,7 @@ heater_width = 0.8   # Width to match the depth of the box
 heater_height = 0.05      # Height of the heater box as specified
 heater_gap = 0.1
 
-# Since the heater is now smaller than the box, we will center it right below the box.
+# Heater size setting and center it right below the box.
 # Calculate the starting positions (xmin and zmin for the heater) to center it
 heater_xmin = (xmin + xmax - heater_length) / 2
 heater_zmin = (zmin + zmax - heater_width) / 2
@@ -143,10 +143,12 @@ while window.running:
 
     iter += 1
 
+    # Visualize heater
     if add_heater:
         scene.lines(vertices=heater_vertices, width=0.5, indices=heater_indices, color=(1, 0, 0))  # Heater color
 
     if shake:
+        #Use sine function to represent the movement of a piston in y-axis
         ymax = box_size * (1 + 0.8 * math.sin(elapsed_time * 300))
         line_vertices[0] = [xmin, ymax, zmin]
         line_vertices[1] = [xmax, ymax, zmin]
