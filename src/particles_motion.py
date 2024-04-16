@@ -16,9 +16,6 @@ def particle_collision(pos, v, ball_radius):
     delta_y = np.absolute(pos_y - pos_y.T)
     delta_z = np.absolute(pos_z - pos_z.T)
 
-    # dist = np.square(delta_x) + np.square(delta_y) + np.square(delta_z)
-    # min_dist = np.min(dist, axis=1)
-    # closest_neighbor = np.argmin(dist, axis=1)
     collision_condition = (delta_x < 2 * ball_radius) & (delta_y < 2 * ball_radius) & (delta_z < 2 * ball_radius)
     collision_neighbor = np.argwhere(collision_condition)
     _, idx = np.unique(collision_neighbor[:, 0], return_index=True)
@@ -37,16 +34,6 @@ def border_collisions(pos, v, m, dt, xmin, xmax, ymin, ymax, zmin, zmax, add_hea
     v_x = v[:, 0]
     v_y = v[:, 1]
     v_z = v[:, 2]
-
-    # Detect particles hitting the bottom area above the heater
-    # bc_y_min_heater = (pos_y <= ymin) & (pos_x >= heater_xmin) & (pos_x <= heater_xmax) & (pos_z >= heater_zmin) & (pos_z <= heater_zmax)
-    # pos[bc_y_min_heater, 1] = ymin
-    # bc_y_min_heater = bc_y_min_heater & (v_y < 0)
-
-    # # Update velocity for particles hitting the heater area
-    # v[bc_y_min_heater, 1] *= -1
-    # v_abs = get_v_abs(v[bc_y_min_heater])
-    # v[bc_y_min_heater] *= np.sqrt(1 + delta_E / (m * v_abs ** 2))
 
     # bc stands for boundary condition
     bc_x_min = (pos_x <= xmin)
@@ -70,6 +57,7 @@ def border_collisions(pos, v, m, dt, xmin, xmax, ymin, ymax, zmin, zmax, add_hea
     bc_y_min = bc_y_min & (v_y < 0)
     orginal_vy = v[bc_y_min, 1]
     v[bc_y_min, 1] *= -1
+    # handle the heater part
     if add_heater:
         bc_heater = bc_y_min & (pos_x >= heater_xmin) & (pos_x <= heater_xmax) & (pos_z >= heater_zmin) & (pos_z <= heater_zmax)
         new_Ey = heater_E - 0.5 * m * np.square(v[bc_heater, 0]) - 0.5 * m * np.square(v[bc_heater, 2])
@@ -109,5 +97,4 @@ def border_collisions(pos, v, m, dt, xmin, xmax, ymin, ymax, zmin, zmax, add_hea
 
 def emit_from_drain(pos, v, xmin, drain_size):
     drain_condition = (pos[:, 0] <= xmin) & (abs(pos[:, 1]) <= drain_size) & (abs(pos[:, 2]) <= drain_size) & (v[:, 0] < 0)
-    # print(f"shape of drain condition: {drain_condition.shape}")
     return np.argwhere(drain_condition).flatten()

@@ -3,7 +3,7 @@ import numpy as np
 import time
 import math
 import tkinter as tk
-ti.init(arch=ti.cpu)  # Alternatively, ti.init(arch=ti.cpu), ti.init(arch=ti.vulkan)
+ti.init(arch=ti.vulkan)  # Alternatively, ti.init(arch=ti.cpu), ti.init(arch=ti.vulkan)
 
 from src.particles_motion import particle_motion, particle_collision, border_collisions, emit_from_drain
 from src.particle_source import add_diffusion_particles
@@ -84,7 +84,7 @@ T_actual = None
 m = 0.032
 Vrms = math.sqrt(3 * R * T_set / m)
 
-heater_E = 1.5 * R * 450
+heater_E = 1.5 * R * 400
 
 pos = np.random.uniform(low=-box_size, high=box_size, size=(n, 3))
 
@@ -99,16 +99,12 @@ v = np.hstack((vx, vy, vz))
 
 a = np.array([0.0, -9.8, 0.0])
 
-# clr = np.zeros((n, 3))
-
 pos = pos.astype(np.float32)
 ball_center.from_numpy(pos)
 
 blue = np.array([[0.0, 0.0, 0.545]])
 red = np.array([[0.6, 0.0, 0.0]])
 
-# window = ti.ui.Window("Taichi Gascd  Simulation on GGUI", (480, 320),
-#                       vsync=True)
 #Enlarge the window
 root = tk.Tk()
 root.withdraw()
@@ -139,7 +135,7 @@ num_emit_total = 0
 num_data = 0
 
 # file = open("data/pt_n1000_v16.txt", "w")
-# file_tmp = open("data/temp-time_shake.txt", "w")
+file_tmp = open("data/temp-time_vshake_400.txt", "w")
 
 #count = 0
 while window.running:
@@ -171,6 +167,7 @@ while window.running:
     # Update particle position and velocity
     pos, v = particle_motion(pos, v, a, dt)
 
+    # collision between particles
     v = particle_collision(pos, v, ball_radius)
 
     if show_drain:
@@ -187,10 +184,12 @@ while window.running:
 
     n_avg = n_avg * (iter - 1)/iter + n / iter
 
+    # collision between particles and the border of the box
     pos, v, P = border_collisions(pos, v, m, dt, xmin, xmax, ymin, ymax, zmin, zmax, add_heater, heater_xmin, heater_xmax, heater_zmin, heater_zmax, heater_E)
     pos = pos.astype(np.float32)
     ball_center.from_numpy(pos)
 
+    # updates the color of particles according to the velocity
     v_abs = get_v_abs(v)
     clr = blue * (1.3 * Vrms - v_abs) + red * (v_abs - Vrms)
     clr = np.clip(clr, 0, 1)
@@ -226,15 +225,15 @@ while window.running:
         print(f"PV / nRT = {(P_avg * V_avg) / (n_avg * R * T_avg)}")
         print(f"P = {P_avg}, T = {T_avg} P/T = {P_avg / T_avg}")
         # file.write(f"{P_avg}, {T_avg}\n")
-        # file_tmp.write(f"{T_avg}, {elapsed_time}\n")
+        file_tmp.write(f"{elapsed_time}, {T_avg}, {V_avg}\n")
         num_data += 1
         if show_drain:
             print(f"{num_emit} particles emit.")
             num_emit_total += num_emit
             num_emit = 0
         
-        if T_avg >= 400:
-            print(f"End at iteration = {num_data}")
+        if T_avg >= 395 or num_data == 50:
+            print(f"End at iteration = {num_data}, final temperature is {T_avg}")
             break
 
         # ymax = box_size * (0.25 + 0.05 * num_data)
@@ -260,9 +259,6 @@ while window.running:
     scene.point_light(pos=(0, 1, 2), color=(1, 1, 1))
     scene.ambient_light((0.5, 0.5, 0.5))
     scene.particles(ball_center, radius=ball_radius, per_vertex_color=ball_color)
-    # test_particle = ti.Vector.field(3, dtype=float, shape=(1,))
-    # test_particle.from_numpy(np.array([[0,box_size,0]]))
-    # scene.particles(test_particle, radius=ball_radius*5, color=(0.0, 0.0, 0.0))
 
     canvas.scene(scene)
     window.show()
@@ -270,4 +266,4 @@ while window.running:
     elapsed_time += dt
 
 # file.close()
-# file_tmp.close()
+file_tmp.close()
